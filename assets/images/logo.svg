@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 180" width="100%" height="100%" fill="none">
+  <!-- ThinkLab Studio Official Logo Vector -->
+  <defs>
+    <!-- Subtle glow and filter if needed -->
+    <filter id="badgeShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <g id="ThinkLab-Logo">
+    <!-- Main Text "ThinkL" -->
+    <!-- T -->
+    <path d="M 45 42 L 80 42 M 62.5 42 L 62.5 96" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- h -->
+    <path d="M 96 32 L 96 96 M 96 66 C 104 52, 124 52, 124 68 L 124 96" stroke="#FFFFFF" stroke-width="10.5" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- i -->
+    <circle cx="143" cy="42" r="5.5" fill="#FFFFFF"/>
+    <path d="M 143 57 L 143 96" stroke="#FFFFFF" stroke-width="10.5" stroke-linecap="round"/>
+    
+    <!-- n -->
+    <path d="M 164 57 L 164 96 M 164 68 C 172 54, 192 54, 192 70 L 192 96" stroke="#FFFFFF" stroke-width="10.5" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- k -->
+    <path d="M 213 32 L 213 96 M 239 57 L 214 77 L 242 96" stroke="#FFFFFF" stroke-width="10.5" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- L -->
+    <path d="M 264 32 L 264 96 L 292 96" stroke="#FFFFFF" stroke-width="10.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Laboratory Beaker Flask replacing 'a' -->
+    <!-- Flask Neck & Rim -->
+    <path d="M 321 44 L 337 44" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 324 45 L 324 55 M 334 45 L 334 55" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+    <!-- Flask Conical Body -->
+    <path d="M 324 55 L 305 92 C 303 96, 306 98, 311 98 L 347 98 C 352 98, 355 96, 353 92 L 334 55 Z" stroke="#FFFFFF" stroke-width="7" stroke-linejoin="round" fill="none"/>
+    <!-- Liquid Level Inside Flask -->
+    <path d="M 312 82 Q 329 80 346 82" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round"/>
+    <!-- Rising Effervescent Bubbles -->
+    <circle cx="339" cy="31" r="4" fill="#FFFFFF"/>
+    <circle cx="347" cy="20" r="2.8" fill="#FFFFFF"/>
+
+    <!-- b -->
+    <path d="M 374 32 L 374 96 M 374 76 C 374 61, 388 54, 403 54 C 418 54, 429 66, 429 78 C 429 90, 417 98, 403 98 C 388 98, 374 91, 374 76" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- S T U D I O Subtitle -->
+    <text x="240" y="146" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Space Grotesk', -apple-system, sans-serif" font-weight="700" font-size="28" fill="#FFFFFF" letter-spacing="18">STUDIO</text>
+  </g>
+</svg>
