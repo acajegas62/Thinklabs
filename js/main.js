@@ -792,17 +792,17 @@ function initColorWaveReveal() {
 // Looping Review Carousel ("Our point of view")
 // ---------------------------------------------------------------------------
 function initReviewCarousel() {
-  const carousel = document.querySelector('#review-carousel');
-  const track = document.querySelector('#review-track');
-  const prevBtn = document.querySelector('#review-prev');
-  const nextBtn = document.querySelector('#review-next');
-  const currentNumEl = document.querySelector('#review-current-num');
-  const totalNumEl = document.querySelector('#review-total-num');
-  const dotsContainer = document.querySelector('#review-dots');
+  const carousel = document.querySelector('#belief-carousel');
+  const track = document.querySelector('#belief-track');
+  const prevBtn = document.querySelector('#belief-prev');
+  const nextBtn = document.querySelector('#belief-next');
+  const currentNumEl = document.querySelector('#belief-current');
+  const totalNumEl = document.querySelector('#belief-total');
+  const dotsContainer = document.querySelector('#belief-dots');
 
   if (!carousel || !track) return;
 
-  const originalSlides = Array.from(track.querySelectorAll('.review-slide'));
+  const originalSlides = Array.from(track.querySelectorAll('.belief-slide'));
   const totalSlides = originalSlides.length;
   if (totalSlides === 0) return;
 
@@ -833,7 +833,7 @@ function initReviewCarousel() {
     for (let i = 0; i < totalSlides; i++) {
       const dot = document.createElement('button');
       dot.type = 'button';
-      dot.className = 'review-dot';
+      dot.className = 'belief-dot';
       dot.setAttribute('role', 'tab');
       dot.setAttribute('aria-label', `Go to review ${i + 1}`);
       dot.setAttribute('aria-selected', i === 0 ? 'true' : 'false');

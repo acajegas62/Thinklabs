@@ -299,378 +299,123 @@ html.lenis, html.lenis body {
   }
 }
 
-
-
 /* ==========================================================================
-   Review Carousel — "Our point of view" Section
+   "Our point of view" Review Carousel
    ========================================================================== */
-.belief {
-  padding-block: 100px 120px;
-  position: relative;
-}
-
-.belief-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.32fr;
-  gap: 72px;
-  align-items: start;
-}
-
-.belief-intro {
-  display: flex;
-  flex-direction: column;
-}
-
-.belief-lead {
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.6;
-  margin-top: 18px;
-  max-width: 440px;
-}
-
-.belief-meta-card {
-  margin-top: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.belief-rating-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  padding: 10px 16px;
-  border-radius: 999px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  width: fit-content;
-}
-
-.belief-rating-pill .fb-icon {
-  flex-shrink: 0;
-  display: block;
-}
-
-.belief-rating-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.belief-stars {
-  color: #f59e0b;
-  font-size: 12px;
-  letter-spacing: 2px;
-  line-height: 1;
-}
-
-.belief-rating-source {
-  font-size: 11px;
-  color: #c5c8bf;
-  letter-spacing: -0.2px;
-}
-
-.carousel-nav-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.carousel-arrow {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #eeefeb;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  padding: 0;
-}
-
-.carousel-arrow:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.32);
-  transform: translateY(-2px);
-  color: #ffffff;
-}
-
-.carousel-arrow:active {
-  transform: translateY(0);
-}
-
-.carousel-index {
-  font-size: 12px;
-  color: #eeefeb;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 1px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 46px;
-}
-
-.carousel-index .sep {
-  color: #555952;
-}
-
-.carousel-index span:last-child {
-  color: var(--muted);
-}
-
-/* Carousel Container */
-.review-carousel-wrap {
-  position: relative;
+.belief-carousel-wrap {
   width: 100%;
   min-width: 0;
+  position: relative;
 }
 
-.review-carousel {
-  position: relative;
+.belief-carousel {
   overflow: hidden;
-  border-radius: 20px;
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.008) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  width: 100%;
+  position: relative;
   touch-action: pan-y pinch-zoom;
   user-select: none;
   -webkit-user-select: none;
   cursor: grab;
 }
 
-.review-carousel:active {
+.belief-carousel:active {
   cursor: grabbing;
 }
 
-.review-track {
+.belief-track {
   display: flex;
   width: 100%;
+  align-items: flex-start;
   transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.review-slide {
+.belief-slide {
   flex: 0 0 100%;
   width: 100%;
   min-width: 100%;
-  padding: 40px 42px 34px;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 330px;
-  position: relative;
 }
 
-.review-slide-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 22px;
-}
-
-.review-slide-header .quote-mark {
-  font-family: Georgia, serif;
-  font-size: 56px;
-  line-height: 0.7;
-  color: #b7cca7;
+.belief-slide blockquote {
   margin: 0;
-  opacity: 0.9;
+  font-size: 23px;
+  line-height: 1.4;
+  letter-spacing: -0.5px;
+  color: var(--ink);
 }
 
-.review-badges {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.badge-source {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 500;
-  color: #dbe4ef;
-  background: rgba(24, 119, 242, 0.12);
-  border: 1px solid rgba(24, 119, 242, 0.28);
-  padding: 4px 10px;
-  border-radius: 999px;
-  letter-spacing: -0.2px;
-}
-
-.badge-fb-icon {
-  flex-shrink: 0;
-  display: block;
-}
-
-.badge-recommended {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  color: #aec89a;
-  background: rgba(174, 200, 154, 0.1);
-  border: 1px solid rgba(174, 200, 154, 0.25);
-  padding: 4px 9px;
-  border-radius: 999px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.badge-recommended .rec-star {
-  color: #f59e0b;
-  font-size: 11px;
-}
-
-.review-text {
-  margin: 0 0 28px;
-  font-size: 17px;
-  line-height: 1.62;
-  letter-spacing: -0.3px;
-  color: #eeefeb;
-  font-weight: 400;
-  font-style: normal;
-}
-
-.review-slide-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  margin-top: auto;
-}
-
-.client-profile {
+.belief-nav {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-top: 32px;
 }
 
-.avatar-circle {
-  width: 38px;
-  height: 38px;
+.belief-nav-btn {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1e2620 0%, #131714 100%);
-  border: 1px solid rgba(183, 204, 167, 0.35);
-  color: #aec89a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  flex-shrink: 0;
-}
-
-.client-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.client-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: #ffffff;
-  letter-spacing: -0.2px;
-}
-
-.client-action {
-  font-size: 10px;
+  background: transparent;
+  border: 1px solid var(--line);
   color: var(--muted);
-}
-
-.client-action em {
-  font-style: normal;
-  color: #aec89a;
-}
-
-.review-time {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.belief-nav-btn:hover {
+  color: var(--ink);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.belief-nav-btn:active {
+  transform: scale(0.95);
+}
+
+.belief-counter {
   font-size: 11px;
-  color: #9da197;
-  white-space: nowrap;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  padding: 5px 10px;
-  border-radius: 6px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  font-variant-numeric: tabular-nums;
+  margin-left: 2px;
 }
 
-.review-time .time-icon {
-  opacity: 0.65;
-  color: #aec89a;
-}
-
-/* Dots navigation */
-.review-dots {
+.belief-dots {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 7px;
-  margin-top: 22px;
+  gap: 6px;
 }
 
-.review-dot {
-  width: 7px;
-  height: 7px;
+.belief-dot {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.18);
   border: none;
   padding: 0;
   cursor: pointer;
-  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s ease;
 }
 
-.review-dot:hover {
+.belief-dot:hover {
   background: rgba(255, 255, 255, 0.45);
-  transform: scale(1.2);
 }
 
-.review-dot[aria-selected="true"] {
+.belief-dot[aria-selected="true"] {
   background: #aec89a;
-  width: 22px;
-  border-radius: 4px;
-  box-shadow: 0 0 12px rgba(174, 200, 154, 0.45);
+  width: 18px;
+  border-radius: 3px;
 }
 
 @media (max-width: 900px) {
-  .belief {
-    padding-block: 70px 80px;
-  }
-  .belief-grid {
-    grid-template-columns: 1fr !important;
-    gap: 36px !important;
-  }
-  .review-slide {
-    padding: 28px 24px 22px;
-    min-height: auto;
-  }
-  .review-text {
-    font-size: 15px;
-    line-height: 1.55;
-    margin-bottom: 22px;
-  }
-  .review-slide-footer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  .review-time {
-    align-self: flex-start;
-  }
-  .carousel-nav-group {
-    justify-content: flex-start;
+  .belief-slide blockquote {
+    font-size: 20px;
+    line-height: 1.45;
   }
 }
+
