@@ -196,6 +196,7 @@ if (typeof Lenis !== 'undefined' && !prefersReducedMotion) {
     touchMultiplier: 1.4,
     infinite: false,
   });
+  window.lenis = lenisInstance;
 
   function raf(time) {
     lenisInstance.raf(time);
@@ -212,17 +213,44 @@ const heroContent = document.querySelector('.hero-content');
 const heroCaption = document.querySelector('.hero-caption');
 const workCards = document.querySelectorAll('.work-card');
 
-function handleScrollUpdates() {
-  const scrollY = window.scrollY || window.pageYOffset || 0;
+let heroHeight = 730;
+let lastHeaderScrolled = false;
 
-  // Header frosted glass on scroll
+// Pre-cache work card DOM nodes and metrics (Zero querySelector / layout calls on scroll)
+const cachedWorkCards = Array.from(workCards).map(card => ({
+  card,
+  img: card.querySelector('.work-image img'),
+  top: 0,
+  height: 0,
+  lastShiftY: -9999
+}));
+
+function refreshParallaxMetrics() {
+  if (hero) heroHeight = hero.offsetHeight || 730;
+  const currentScroll = window.scrollY || window.pageYOffset || 0;
+  for (let i = 0; i < cachedWorkCards.length; i++) {
+    const item = cachedWorkCards[i];
+    const rect = item.card.getBoundingClientRect();
+    item.top = rect.top + currentScroll;
+    item.height = rect.height || item.card.offsetHeight;
+  }
+}
+refreshParallaxMetrics();
+
+function handleScrollUpdates() {
+  const scrollY = lenisInstance ? lenisInstance.scroll : (window.scrollY || window.pageYOffset || 0);
+
+  // Header frosted glass on scroll (only update DOM when state toggles)
   if (header) {
-    header.classList.toggle('scrolled', scrollY > 40);
+    const isScrolled = scrollY > 40;
+    if (isScrolled !== lastHeaderScrolled) {
+      header.classList.toggle('scrolled', isScrolled);
+      lastHeaderScrolled = isScrolled;
+    }
   }
 
   // Hero parallax & fade
   if (hero && heroImage && scrollY < 950 && !prefersReducedMotion) {
-    const heroHeight = hero.offsetHeight || 730;
     const progress = Math.min(1, scrollY / heroHeight);
     heroImage.style.transform = `translate3d(0, ${(scrollY * 0.32).toFixed(1)}px, 0) scale(${(1 + progress * 0.05).toFixed(4)})`;
     if (heroContent) {
@@ -234,20 +262,22 @@ function handleScrollUpdates() {
     }
   }
 
-  // Work card image parallax (window effect from reference video)
-  if (workCards.length && !prefersReducedMotion) {
-    const vh = window.innerHeight;
-    workCards.forEach(card => {
-      const rect = card.getBoundingClientRect();
-      if (rect.top < vh + 100 && rect.bottom > -100) {
-        const img = card.querySelector('.work-image img');
-        if (img) {
-          const progress = (vh - rect.top) / (vh + rect.height);
-          const shiftY = ((progress - 0.5) * 36).toFixed(1);
-          img.style.transform = `translate3d(0, ${shiftY}px, 0) scale(1.04)`;
+  // Work card image parallax using cached metrics (zero layout queries!)
+  if (cachedWorkCards.length && !prefersReducedMotion) {
+    const vh = window.innerHeight || 800;
+    for (let i = 0; i < cachedWorkCards.length; i++) {
+      const item = cachedWorkCards[i];
+      if (!item.img) continue;
+      const cardTop = item.top - scrollY;
+      if (cardTop < vh + 100 && cardTop + item.height > -100) {
+        const progress = (vh - cardTop) / (vh + item.height);
+        const shiftY = ((progress - 0.5) * 36) | 0; // integer px, zero float churn
+        if (shiftY !== item.lastShiftY) {
+          item.img.style.transform = `translate3d(0, ${shiftY}px, 0) scale(1.04)`;
+          item.lastShiftY = shiftY;
         }
       }
-    });
+    }
   }
 }
 
@@ -281,7 +311,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 
 // Scroll Reveal Animations (IntersectionObserver)
 const revealSelectors = [
-  '.manifesto p',
   '.section-heading',
   '.work-card',
   '.belief-grid',
@@ -296,7 +325,11 @@ const revealSelectors = [
 ];
 
 const revealTargets = document.querySelectorAll(revealSelectors.join(','));
-revealTargets.forEach(el => el.classList.add('reveal-item'));
+revealTargets.forEach(el => {
+  if (!el.matches('[data-scroll="scrub"], [data-reveal="scrub"], [data-reveal="auto"]')) {
+    el.classList.add('reveal-item');
+  }
+});
 
 // Stagger delays for grid lists
 document.querySelectorAll('.work-grid, .use-grid, .principles').forEach(grid => {
@@ -322,3 +355,429 @@ if ('IntersectionObserver' in window && !prefersReducedMotion) {
 } else {
   revealTargets.forEach(el => el.classList.add('is-visible'));
 }
+
+// ---------------------------------------------------------------------------
+// High-Performance Color Wave Text Reveal Engine
+// (Zero Layout Thrashing, Precomputed LUTs, Zero Allocation, Bidirectional Scrub)
+// Reference: assets/images/6cd205a7-2630-490a-8584-48b9ff950dc4.mp4
+// ---------------------------------------------------------------------------
+
+function initColorWaveReveal() {
+  const scrubElements = document.querySelectorAll('[data-scroll="scrub"], [data-reveal="scrub"], .color-wave-scrub');
+  const autoElements = document.querySelectorAll('[data-reveal="auto"], .color-wave-auto');
+  
+  if (!scrubElements.length && !autoElements.length) return;
+
+  // Build a 64-step static Color/Shadow Look-Up Table (LUT)
+  // Completely eliminates string concatenation and GC allocations during scrolling!
+  const LUT_STEPS = 64;
+  const lutCache = new Map();
+
+  function getPaletteLUT(dim, wave, lit) {
+    const key = `${dim.r},${dim.g},${dim.b},${dim.a}|${wave.r},${wave.g},${wave.b}|${lit.r},${lit.g},${lit.b}`;
+    if (lutCache.has(key)) return lutCache.get(key);
+
+    const colors = new Array(LUT_STEPS);
+    const shadows = new Array(LUT_STEPS);
+    const dimStr = `rgba(${dim.r}, ${dim.g}, ${dim.b}, ${dim.a})`;
+    const litStr = `rgb(${lit.r}, ${lit.g}, ${lit.b})`;
+    const waveStr = `rgb(${wave.r}, ${wave.g}, ${wave.b})`;
+
+    for (let step = 0; step < LUT_STEPS; step++) {
+      if (step === 0) {
+        colors[step] = dimStr;
+        shadows[step] = 'none';
+        continue;
+      }
+      if (step === LUT_STEPS - 1) {
+        colors[step] = litStr;
+        shadows[step] = 'none';
+        continue;
+      }
+      if (step === 32) {
+        colors[step] = waveStr;
+        shadows[step] = `0 0 14px rgba(${wave.r}, ${wave.g}, ${wave.b}, 0.55)`;
+        continue;
+      }
+
+      let r, g, b, a, glow;
+      if (step < 32) {
+        const f = step / 32;
+        const k = 0.5 - 0.5 * Math.cos(Math.PI * f);
+        r = Math.round(dim.r + (wave.r - dim.r) * k);
+        g = Math.round(dim.g + (wave.g - dim.g) * k);
+        b = Math.round(dim.b + (wave.b - dim.b) * k);
+        a = +(dim.a + (wave.a - dim.a) * k).toFixed(3);
+        glow = k;
+      } else {
+        const f = (step - 32) / 31;
+        const k = 0.5 - 0.5 * Math.cos(Math.PI * f);
+        r = Math.round(wave.r + (lit.r - wave.r) * k);
+        g = Math.round(wave.g + (lit.g - wave.g) * k);
+        b = Math.round(wave.b + (lit.b - wave.b) * k);
+        a = +(wave.a + (lit.a - wave.a) * k).toFixed(3);
+        glow = 1 - k;
+      }
+
+      colors[step] = `rgba(${r}, ${g}, ${b}, ${a})`;
+      shadows[step] = glow > 0.08
+        ? `0 0 ${Math.round(glow * 14)}px rgba(${wave.r}, ${wave.g}, ${wave.b}, ${(glow * 0.55).toFixed(2)})`
+        : 'none';
+    }
+
+    const lut = { colors, shadows, dimStr, litStr, waveStr };
+    lutCache.set(key, lut);
+    return lut;
+  }
+
+  function parseWaveColor(str) {
+    if (!str) return null;
+    str = str.trim();
+    if (str.startsWith('#')) {
+      let hex = str.slice(1);
+      if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+      const num = parseInt(hex, 16);
+      return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255, a: 1.0 };
+    }
+    const match = str.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    if (match) {
+      return {
+        r: parseInt(match[1], 10),
+        g: parseInt(match[2], 10),
+        b: parseInt(match[3], 10),
+        a: match[4] !== undefined ? parseFloat(match[4]) : 1.0
+      };
+    }
+    return null;
+  }
+
+  function splitIntoChars(el) {
+    if (el.dataset.cwInitialized) return el._charElements || [];
+
+    const fullText = el.textContent.trim();
+    el.setAttribute('aria-label', fullText);
+    
+    const innerWrapper = document.createElement('span');
+    innerWrapper.className = 'cw-inner';
+    innerWrapper.setAttribute('aria-hidden', 'true');
+
+    const charElements = [];
+
+    function walk(node, target) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent;
+        if (!text) return;
+        const tokens = text.split(/(\s+)/);
+        tokens.forEach(tok => {
+          if (!tok) return;
+          if (/^\s+$/.test(tok)) {
+            const sp = document.createElement('span');
+            sp.className = 'cw-space';
+            sp.textContent = tok;
+            target.appendChild(sp);
+          } else {
+            const w = document.createElement('span');
+            w.className = 'cw-word';
+            for (const ch of tok) {
+              const c = document.createElement('span');
+              c.className = 'cw-char';
+              c.textContent = ch;
+              c._state = -1;
+              w.appendChild(c);
+              charElements.push(c);
+            }
+            target.appendChild(w);
+          }
+        });
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        if (node.tagName.toLowerCase() === 'br') {
+          target.appendChild(document.createElement('br'));
+        } else {
+          const clone = node.cloneNode(false);
+          node.childNodes.forEach(child => walk(child, clone));
+          target.appendChild(clone);
+        }
+      }
+    }
+
+    el.childNodes.forEach(child => walk(child, innerWrapper));
+    el.replaceChildren(innerWrapper);
+    el.classList.add('cw-container');
+    el.dataset.cwInitialized = 'true';
+    el._charElements = charElements;
+
+    return charElements;
+  }
+
+  const scrubItems = [];
+  const autoItems = [];
+
+  function createItem(el, isAuto = false) {
+    const chars = splitIntoChars(el);
+    const isLight = Boolean(el.closest('.light-zone'));
+    const isMuted = el.classList.contains('muted');
+    const isSoft = el.classList.contains('soft');
+
+    let lit;
+    if (isLight) {
+      lit = { r: 48, g: 51, b: 47, a: 1.0 };
+    } else if (isMuted) {
+      lit = { r: 168, g: 173, b: 162, a: 1.0 };
+    } else if (isSoft) {
+      lit = { r: 117, g: 122, b: 111, a: 1.0 };
+    } else {
+      lit = { r: 255, g: 255, b: 255, a: 1.0 };
+    }
+
+    const dim = isLight
+      ? { r: 48, g: 51, b: 47, a: 0.22 }
+      : { r: 255, g: 255, b: 255, a: 0.22 };
+
+    const waveColor = parseWaveColor(el.dataset.waveColor) || (isLight ? { r: 235, g: 65, b: 20, a: 1.0 } : { r: 255, g: 85, b: 34, a: 1.0 });
+
+    const lut = getPaletteLUT(dim, waveColor, lit);
+
+    const count = chars.length;
+    const charPositions = new Float32Array(count);
+    for (let i = 0; i < count; i++) {
+      charPositions[i] = count > 1 ? i / (count - 1) : 0.5;
+    }
+
+    const startRatio = parseFloat(el.dataset.scrollStart) || 0.88;
+    const endRatio = parseFloat(el.dataset.scrollEnd) || 0.28;
+    const spread = Math.max(0.12, Math.min(0.24, 7.5 / count));
+
+    const item = {
+      el,
+      chars,
+      charPositions,
+      count,
+      lut,
+      spread,
+      startRatio,
+      endRatio,
+      top: 0,
+      height: 0,
+      currentP: 0,
+      targetP: 0,
+      hasPlayed: false,
+      isLight
+    };
+
+    renderColorWave(item, 0);
+    return item;
+  }
+
+  function renderColorWave(item, progress) {
+    const chars = item.chars;
+    const count = item.count;
+    if (!count) return;
+
+    if (prefersReducedMotion) {
+      const litStr = item.lut.litStr;
+      for (let i = 0; i < count; i++) {
+        chars[i].style.color = litStr;
+        chars[i].style.textShadow = 'none';
+      }
+      return;
+    }
+
+    const lut = item.lut;
+    const spread = item.spread;
+    const charPositions = item.charPositions;
+    const center = progress * (1 + 2 * spread) - spread;
+    const maxIdx = LUT_STEPS - 1;
+
+    for (let i = 0; i < count; i++) {
+      const diff = charPositions[i] - center;
+      const span = chars[i];
+
+      if (diff >= spread) {
+        if (span._state !== 0) {
+          span.style.color = lut.dimStr;
+          span.style.textShadow = 'none';
+          span._state = 0;
+        }
+      } else if (diff <= -spread) {
+        if (span._state !== maxIdx) {
+          span.style.color = lut.litStr;
+          span.style.textShadow = 'none';
+          span._state = maxIdx;
+        }
+      } else {
+        const u = (diff + spread) / (2 * spread);
+        const step = Math.min(maxIdx, Math.max(0, Math.round((1 - u) * maxIdx)));
+        if (span._state !== step) {
+          span.style.color = lut.colors[step];
+          span.style.textShadow = lut.shadows[step];
+          span._state = step;
+        }
+      }
+    }
+  }
+
+  scrubElements.forEach(el => scrubItems.push(createItem(el, false)));
+  autoElements.forEach(el => autoItems.push(createItem(el, true)));
+
+  // Cache document offsets once - ZERO getBoundingClientRect() during scroll!
+  function refreshMetrics() {
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+    for (let i = 0; i < scrubItems.length; i++) {
+      const it = scrubItems[i];
+      const rect = it.el.getBoundingClientRect();
+      it.top = rect.top + scrollY;
+      it.height = it.el.offsetHeight || rect.height;
+    }
+    refreshParallaxMetrics();
+  }
+
+  refreshMetrics();
+  window.addEventListener('resize', refreshMetrics);
+
+  let isTicking = false;
+
+  function tickColorWave() {
+    const vh = window.innerHeight || 800;
+    const scrollY = lenisInstance ? lenisInstance.scroll : (window.scrollY || window.pageYOffset || 0);
+    let hasPending = false;
+
+    for (let i = 0; i < scrubItems.length; i++) {
+      const item = scrubItems[i];
+      const rectTop = item.top - scrollY;
+      const rectBottom = rectTop + item.height;
+
+      // Virtual viewport bounds culling
+      if (rectBottom < -120) {
+        if (item.currentP < 1) {
+          item.targetP = 1;
+          item.currentP = 1;
+          renderColorWave(item, 1);
+        }
+        continue;
+      }
+      if (rectTop > vh + 120) {
+        if (item.currentP > 0) {
+          item.targetP = 0;
+          item.currentP = 0;
+          renderColorWave(item, 0);
+        }
+        continue;
+      }
+
+      // Compute target progress from cached metrics (zero layout queries)
+      const startY = vh * item.startRatio;
+      const endY = vh * item.endRatio;
+      const travel = (startY - endY) + item.height * 0.55;
+      const current = startY - rectTop;
+      const rawP = current / travel;
+      item.targetP = rawP <= 0 ? 0 : rawP >= 1 ? 1 : rawP;
+
+      // Smooth bidirectional lerp
+      const diff = item.targetP - item.currentP;
+      if (diff > 0.0008 || diff < -0.0008) {
+        item.currentP += diff * 0.22;
+        renderColorWave(item, item.currentP);
+        hasPending = true;
+      } else if (item.currentP !== item.targetP) {
+        item.currentP = item.targetP;
+        renderColorWave(item, item.currentP);
+      }
+    }
+
+    if (hasPending) {
+      requestAnimationFrame(tickColorWave);
+      isTicking = true;
+    } else {
+      isTicking = false;
+    }
+  }
+
+  function requestTick() {
+    if (!isTicking) {
+      isTicking = true;
+      requestAnimationFrame(tickColorWave);
+    }
+  }
+
+  // Hook into Lenis scroll and window scroll
+  if (lenisInstance) {
+    lenisInstance.on('scroll', () => {
+      handleScrollUpdates();
+      requestTick();
+    });
+  } else {
+    window.addEventListener('scroll', () => {
+      handleScrollUpdates();
+      requestTick();
+    }, { passive: true });
+  }
+
+  // Initial trigger
+  requestTick();
+
+  // Auto-reveal elements
+  function playAutoWave(item, duration = 1450) {
+    if (item.hasPlayed) return;
+    item.hasPlayed = true;
+    const startTime = performance.now();
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const t = Math.min(1, elapsed / duration);
+      const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      renderColorWave(item, ease);
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        renderColorWave(item, 1);
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
+  if (autoItems.length) {
+    autoItems.forEach(item => {
+      const rect = item.el.getBoundingClientRect();
+      const inView = rect.top < (window.innerHeight || 800) && rect.bottom > 0;
+      if (inView && !prefersReducedMotion) {
+        setTimeout(() => playAutoWave(item), 250);
+      }
+    });
+
+    if ('IntersectionObserver' in window && !prefersReducedMotion) {
+      const autoObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const item = autoItems.find(it => it.el === entry.target);
+            if (item && !item.hasPlayed) {
+              setTimeout(() => playAutoWave(item), 200);
+            }
+            autoObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+
+      autoItems.forEach(item => {
+        if (!item.hasPlayed) autoObserver.observe(item.el);
+      });
+    } else {
+      autoItems.forEach(item => renderColorWave(item, 1));
+    }
+  }
+
+  window.colorWave = {
+    scrubItems,
+    autoItems,
+    renderColorWave,
+    requestTick,
+    refreshMetrics
+  };
+}
+
+// Initialize Color Wave Reveal on DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initColorWaveReveal);
+} else {
+  initColorWaveReveal();
+}
+
